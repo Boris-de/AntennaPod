@@ -31,14 +31,13 @@ import com.bumptech.glide.Glide;
 import com.joanzapata.iconify.IconDrawable;
 import com.joanzapata.iconify.fonts.FontAwesomeIcons;
 
-import java.util.Locale;
-
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.core.event.ServiceEvent;
 import de.danoeh.antennapod.core.feed.FeedItem;
 import de.danoeh.antennapod.core.feed.FeedMedia;
 import de.danoeh.antennapod.core.preferences.UserPreferences;
 import de.danoeh.antennapod.core.service.playback.PlaybackService;
+import de.danoeh.antennapod.core.service.playback.PlaybackSpeed;
 import de.danoeh.antennapod.core.storage.DBReader;
 import de.danoeh.antennapod.core.storage.DBTasks;
 import de.danoeh.antennapod.core.storage.DBWriter;
@@ -475,27 +474,19 @@ public abstract class MediaplayerActivity extends CastEnabledActivity implements
                         });
 
                         final TextView txtvPlaybackSpeed = (TextView) dialog.findViewById(R.id.txtvPlaybackSpeed);
-                        float currentSpeed = 1.0f;
-                        try {
-                            currentSpeed = Float.parseFloat(UserPreferences.getPlaybackSpeed());
-                        } catch (NumberFormatException e) {
-                            Log.e(TAG, Log.getStackTraceString(e));
-                            UserPreferences.setPlaybackSpeed(String.valueOf(currentSpeed));
-                        }
+                        final PlaybackSpeed currentSpeed = PlaybackSpeed.getPlaybackSpeed(media);
 
-                        txtvPlaybackSpeed.setText(String.format("%.2fx", currentSpeed));
+                        txtvPlaybackSpeed.setText(currentSpeed.formatWithMultiplicator());
                         barPlaybackSpeed.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
                             @Override
                             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                                 if(controller != null && controller.canSetPlaybackSpeed()) {
-                                    float playbackSpeed = (progress + 10) / 20.0f;
-                                    controller.setPlaybackSpeed(playbackSpeed);
-                                    String speedPref = String.format(Locale.US, "%.2f", playbackSpeed);
-                                    UserPreferences.setPlaybackSpeed(speedPref);
-                                    String speedStr = String.format("%.2fx", playbackSpeed);
-                                    txtvPlaybackSpeed.setText(speedStr);
+                                    PlaybackSpeed playbackSpeed = new PlaybackSpeed((progress + 10) / 20.0f, null);
+                                    controller.setPlaybackSpeed(playbackSpeed.getSpeed());
+                                    UserPreferences.setPlaybackSpeed(playbackSpeed.formatForPreferences());
+                                    txtvPlaybackSpeed.setText(playbackSpeed.formatWithMultiplicator());
                                 } else if(fromUser) {
-                                    float speed = Float.valueOf(UserPreferences.getPlaybackSpeed());
+                                    float speed = PlaybackSpeed.USER_PREFERENCES.getSpeed();
                                     barPlaybackSpeed.post(() -> barPlaybackSpeed.setProgress((int) (20 * speed) - 10));
                                 }
                             }
@@ -511,7 +502,7 @@ public abstract class MediaplayerActivity extends CastEnabledActivity implements
                             public void onStopTrackingTouch(SeekBar seekBar) {
                             }
                         });
-                        barPlaybackSpeed.setProgress((int) (20 * currentSpeed) - 10);
+                        barPlaybackSpeed.setProgress((int) (20 * currentSpeed.getSpeed()) - 10);
 
                         final SeekBar barLeftVolume = (SeekBar) dialog.findViewById(R.id.volume_left);
                         barLeftVolume.setProgress(UserPreferences.getLeftVolumePercentage());

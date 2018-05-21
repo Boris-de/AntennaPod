@@ -6,14 +6,17 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 
-import java.text.DecimalFormat;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import de.danoeh.antennapod.core.feed.FeedItem;
+import de.danoeh.antennapod.core.feed.FeedMedia;
 import de.danoeh.antennapod.core.feed.MediaType;
 import de.danoeh.antennapod.core.preferences.UserPreferences;
 import de.danoeh.antennapod.core.service.playback.PlaybackService;
+import de.danoeh.antennapod.core.service.playback.PlaybackSpeed;
 import de.danoeh.antennapod.core.util.playback.ExternalMedia;
 import de.danoeh.antennapod.core.util.playback.PlaybackServiceStarter;
+import de.danoeh.antennapod.core.util.playback.Playable;
 import de.danoeh.antennapod.dialog.VariableSpeedDialog;
 
 /**
@@ -76,7 +79,9 @@ public class AudioplayerActivity extends MediaplayerInfoActivity {
             return;
         }
         updatePlaybackSpeedButtonText();
-        ViewCompat.setAlpha(butPlaybackSpeed, controller.canSetPlaybackSpeed() ? 1.0f : 0.5f);
+        PlaybackSpeed.PlaybackSpeedSource playbackSpeedSource = getPlaybackSpeed().getSource();
+        boolean canChangeSpeed = controller.canSetPlaybackSpeed() && playbackSpeedSource != PlaybackSpeed.PlaybackSpeedSource.FEED;
+        ViewCompat.setAlpha(butPlaybackSpeed, canChangeSpeed ? 1.0f : 0.5f);
         butPlaybackSpeed.setVisibility(View.VISIBLE);
     }
 
@@ -89,19 +94,11 @@ public class AudioplayerActivity extends MediaplayerInfoActivity {
             butPlaybackSpeed.setVisibility(View.GONE);
             return;
         }
-        float speed = 1.0f;
+        PlaybackSpeed speed = PlaybackSpeed.DEFAULT;
         if(controller.canSetPlaybackSpeed()) {
-            try {
-                // we can only retrieve the playback speed from the controller/playback service
-                // once mediaplayer has been initialized
-                speed = Float.parseFloat(UserPreferences.getPlaybackSpeed());
-            } catch (NumberFormatException e) {
-                Log.e(TAG, Log.getStackTraceString(e));
-                UserPreferences.setPlaybackSpeed(String.valueOf(speed));
-            }
+            speed = getPlaybackSpeed();
         }
-        String speedStr = new DecimalFormat("0.00x").format(speed);
-        butPlaybackSpeed.setText(speedStr);
+        butPlaybackSpeed.setText(speed.formatWithMultiplicator());
     }
 
     @Override
@@ -118,9 +115,17 @@ public class AudioplayerActivity extends MediaplayerInfoActivity {
                 if (controller == null) {
                     return;
                 }
-                if (controller.canSetPlaybackSpeed()) {
+                final PlaybackSpeed playbackSpeed = getPlaybackSpeed();
+                if (playbackSpeed.getSource() == PlaybackSpeed.PlaybackSpeedSource.FEED) {
+                    final Long feedId = getFeedId();
+                    if (feedId != null) {
+                        VariableSpeedDialog.showSpeedConfiguredInFeedPluginDialog(this, feedId);
+                    } else {
+                        Log.w(TAG, "Could not get id of current feed");
+                    }
+                } else if (controller.canSetPlaybackSpeed()) {
                     String[] availableSpeeds = UserPreferences.getPlaybackSpeedArray();
-                    String currentSpeed = UserPreferences.getPlaybackSpeed();
+                    String currentSpeed = playbackSpeed.formatForPreferences();
 
                     // Provide initial value in case the speed list has changed
                     // out from under us
@@ -129,7 +134,7 @@ public class AudioplayerActivity extends MediaplayerInfoActivity {
                     if (availableSpeeds.length > 0) {
                         newSpeed = availableSpeeds[0];
                     } else {
-                        newSpeed = "1.00";
+                        newSpeed = PlaybackSpeed.DEFAULT.formatForPreferences();
                     }
 
                     for (int i = 0; i < availableSpeeds.length; i++) {
@@ -154,5 +159,20 @@ public class AudioplayerActivity extends MediaplayerInfoActivity {
             });
             butPlaybackSpeed.setVisibility(View.VISIBLE);
         }
+    }
+
+    private Long getFeedId() {
+        Playable media = controller.getMedia();
+        if (media instanceof FeedMedia) {
+            final FeedItem item = ((FeedMedia) media).getItem();
+            if (item != null) {
+                return item.getFeed().getId();
+            }
+        }
+        return null;
+    }
+
+    private PlaybackSpeed getPlaybackSpeed() {
+        return PlaybackSpeed.getPlaybackSpeed(controller.getMedia());
     }
 }

@@ -21,6 +21,7 @@ import android.util.Pair;
 import android.webkit.URLUtil;
 
 import de.danoeh.antennapod.core.util.gui.NotificationUtils;
+import de.danoeh.antennapod.core.service.playback.PlaybackSpeed;
 import org.apache.commons.io.FileUtils;
 import org.xml.sax.SAXException;
 
@@ -769,7 +770,7 @@ public class DownloadService extends Service {
             feed.setId(request.getFeedfileId());
             feed.setDownloaded(true);
             feed.setPreferences(new FeedPreferences(0, true, FeedPreferences.AutoDeleteAction.GLOBAL,
-                    request.getUsername(), request.getPassword()));
+                    request.getUsername(), request.getPassword(), PlaybackSpeed.DEFAULT));
             feed.setPageNr(request.getArguments().getInt(DownloadRequester.REQUEST_ARG_PAGE_NR, 0));
 
             DownloadError reason = null;

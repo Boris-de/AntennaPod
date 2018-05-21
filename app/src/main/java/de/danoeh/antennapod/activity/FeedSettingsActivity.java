@@ -35,6 +35,7 @@ import de.danoeh.antennapod.core.feed.FeedPreferences;
 import de.danoeh.antennapod.core.glide.ApGlideSettings;
 import de.danoeh.antennapod.core.glide.FastBlurTransformation;
 import de.danoeh.antennapod.core.preferences.UserPreferences;
+import de.danoeh.antennapod.core.service.playback.PlaybackSpeed;
 import de.danoeh.antennapod.core.storage.DBReader;
 import de.danoeh.antennapod.core.storage.DBWriter;
 import de.danoeh.antennapod.core.storage.DownloadRequestException;
@@ -60,10 +61,12 @@ public class FeedSettingsActivity extends AppCompatActivity {
     private EditText etxtUsername;
     private EditText etxtPassword;
     private EditText etxtFilterText;
+    private EditText etxtPlaybackSpeed;
     private RadioButton rdoFilterInclude;
     private RadioButton rdoFilterExclude;
     private CheckBox cbxAutoDownload;
     private CheckBox cbxKeepUpdated;
+    private CheckBox cbxOverridePlaybackSpeed;
     private Spinner spnAutoDelete;
     private boolean filterInclude = true;
 
@@ -119,6 +122,8 @@ public class FeedSettingsActivity extends AppCompatActivity {
         }
     };
 
+    private boolean playbackSpeedChanged = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setTheme(UserPreferences.getTheme());
@@ -138,10 +143,12 @@ public class FeedSettingsActivity extends AppCompatActivity {
 
         cbxAutoDownload = (CheckBox) findViewById(R.id.cbxAutoDownload);
         cbxKeepUpdated = (CheckBox) findViewById(R.id.cbxKeepUpdated);
+        cbxOverridePlaybackSpeed = (CheckBox) findViewById(R.id.cbxOverridePlaybackSpeed);
         spnAutoDelete = (Spinner) findViewById(R.id.spnAutoDelete);
         etxtUsername = (EditText) findViewById(R.id.etxtUsername);
         etxtPassword = (EditText) findViewById(R.id.etxtPassword);
         etxtFilterText = (EditText) findViewById(R.id.etxtEpisodeFilterText);
+        etxtPlaybackSpeed = (EditText) findViewById(R.id.etxtPlaybackSpeedText);
         rdoFilterInclude = (RadioButton) findViewById(R.id.radio_filter_include);
         rdoFilterInclude.setOnClickListener(v -> {
             filterInclude = true;
@@ -254,6 +261,13 @@ public class FeedSettingsActivity extends AppCompatActivity {
                     }
                     etxtFilterText.addTextChangedListener(filterTextWatcher);
 
+                    cbxOverridePlaybackSpeed.setChecked(prefs.getPlaybackSpeed().getSource() == PlaybackSpeed.PlaybackSpeedSource.FEED);
+                    updatePlaybackSpeed();
+                    cbxOverridePlaybackSpeed.setOnCheckedChangeListener((compoundButton, checked) -> {
+                        playbackSpeedChanged = true;
+                        updatePlaybackSpeed();
+                    });
+
                     supportInvalidateOptionsMenu();
                     updateAutoDownloadSettings();
                 }, error -> {
@@ -284,12 +298,16 @@ public class FeedSettingsActivity extends AppCompatActivity {
                 }
                 prefs.setFilter(new FeedFilter(includeString, excludeString));
             }
-            if (authInfoChanged || autoDeleteChanged || filterTextChanged) {
+            if (playbackSpeedChanged) {
+                prefs.setPlaybackSpeed(getPlaybackSpeed());
+            }
+            if (authInfoChanged || autoDeleteChanged || filterTextChanged || playbackSpeedChanged) {
                 DBWriter.setFeedPreferences(prefs);
             }
             authInfoChanged = false;
             autoDeleteChanged = false;
             filterTextChanged = false;
+            playbackSpeedChanged = false;
         }
     }
 
@@ -344,6 +362,29 @@ public class FeedSettingsActivity extends AppCompatActivity {
             rdoFilterInclude.setEnabled(enabled);
             rdoFilterExclude.setEnabled(enabled);
             etxtFilterText.setEnabled(enabled);
+        }
+    }
+
+    private void updatePlaybackSpeed() {
+        final PlaybackSpeed playbackSpeed = feed.getPreferences().getPlaybackSpeed();
+        etxtPlaybackSpeed.setEnabled(cbxOverridePlaybackSpeed.isChecked());
+        etxtPlaybackSpeed.setText(playbackSpeed.formatForPreferences());
+    }
+
+    private PlaybackSpeed getPlaybackSpeed() {
+        PlaybackSpeed playbackSpeed = null;
+        if (cbxOverridePlaybackSpeed.isChecked()) {
+            playbackSpeed = parsePlaybackSpeed();
+        }
+        return playbackSpeed != null ? playbackSpeed : PlaybackSpeed.USER_PREFERENCES;
+    }
+
+    private PlaybackSpeed parsePlaybackSpeed() {
+        try {
+            final String strSpeed = etxtPlaybackSpeed.getText().toString();
+            return new PlaybackSpeed(Float.parseFloat(strSpeed), PlaybackSpeed.PlaybackSpeedSource.FEED);
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 

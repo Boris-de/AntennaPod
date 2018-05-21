@@ -6,6 +6,7 @@ import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
 import de.danoeh.antennapod.core.preferences.UserPreferences;
+import de.danoeh.antennapod.core.service.playback.PlaybackSpeed;
 import de.danoeh.antennapod.core.storage.DBWriter;
 import de.danoeh.antennapod.core.storage.PodDBAdapter;
 
@@ -19,6 +20,7 @@ public class FeedPreferences {
     private long feedID;
     private boolean autoDownload;
     private boolean keepUpdated;
+    private PlaybackSpeed playbackSpeed;
 
     public enum AutoDeleteAction {
         GLOBAL,
@@ -29,11 +31,11 @@ public class FeedPreferences {
     private String username;
     private String password;
 
-    public FeedPreferences(long feedID, boolean autoDownload, AutoDeleteAction auto_delete_action, String username, String password) {
-        this(feedID, autoDownload, true, auto_delete_action, username, password, new FeedFilter());
+    public FeedPreferences(long feedID, boolean autoDownload, AutoDeleteAction auto_delete_action, String username, String password, PlaybackSpeed playbackSpeed) {
+        this(feedID, autoDownload, true, auto_delete_action, username, password, playbackSpeed, new FeedFilter());
     }
 
-    private FeedPreferences(long feedID, boolean autoDownload, boolean keepUpdated, AutoDeleteAction auto_delete_action, String username, String password, @NonNull FeedFilter filter) {
+    private FeedPreferences(long feedID, boolean autoDownload, boolean keepUpdated, AutoDeleteAction auto_delete_action, String username, String password, PlaybackSpeed playbackSpeed, @NonNull FeedFilter filter) {
         this.feedID = feedID;
         this.autoDownload = autoDownload;
         this.keepUpdated = keepUpdated;
@@ -41,6 +43,7 @@ public class FeedPreferences {
         this.username = username;
         this.password = password;
         this.filter = filter;
+        this.playbackSpeed = playbackSpeed;
     }
 
     public static FeedPreferences fromCursor(Cursor cursor) {
@@ -52,6 +55,7 @@ public class FeedPreferences {
         int indexPassword = cursor.getColumnIndex(PodDBAdapter.KEY_PASSWORD);
         int indexIncludeFilter = cursor.getColumnIndex(PodDBAdapter.KEY_INCLUDE_FILTER);
         int indexExcludeFilter = cursor.getColumnIndex(PodDBAdapter.KEY_EXCLUDE_FILTER);
+        int indexPlaybackSpeed = cursor.getColumnIndex(PodDBAdapter.KEY_PLAYBACK_SPEED);
 
         long feedId = cursor.getLong(indexId);
         boolean autoDownload = cursor.getInt(indexAutoDownload) > 0;
@@ -62,7 +66,15 @@ public class FeedPreferences {
         String password = cursor.getString(indexPassword);
         String includeFilter = cursor.getString(indexIncludeFilter);
         String excludeFilter = cursor.getString(indexExcludeFilter);
-        return new FeedPreferences(feedId, autoDownload, autoRefresh, autoDeleteAction, username, password, new FeedFilter(includeFilter, excludeFilter));
+
+        PlaybackSpeed playbackSpeed;
+        if (cursor.isNull(indexPlaybackSpeed)) {
+            playbackSpeed = PlaybackSpeed.DEFAULT;
+        } else {
+            final float speed = cursor.getFloat(indexPlaybackSpeed);
+            playbackSpeed = new PlaybackSpeed(speed, PlaybackSpeed.PlaybackSpeedSource.FEED);
+        }
+        return new FeedPreferences(feedId, autoDownload, autoRefresh, autoDeleteAction, username, password, playbackSpeed, new FeedFilter(includeFilter, excludeFilter));
     }
 
     /**
@@ -174,5 +186,14 @@ public class FeedPreferences {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    @NonNull
+    public PlaybackSpeed getPlaybackSpeed() {
+        return playbackSpeed;
+    }
+
+    public void setPlaybackSpeed(PlaybackSpeed playbackSpeed) {
+        this.playbackSpeed = playbackSpeed;
     }
 }

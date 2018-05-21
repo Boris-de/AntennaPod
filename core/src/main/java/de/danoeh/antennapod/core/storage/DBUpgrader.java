@@ -287,6 +287,11 @@ class DBUpgrader {
 
             db.execSQL("DROP TABLE " + PodDBAdapter.TABLE_NAME_FEED_IMAGES);
         }
+
+        if (oldVersion < 1060600) {
+            db.execSQL("ALTER TABLE " + PodDBAdapter.TABLE_NAME_FEEDS
+                    + " ADD COLUMN " + PodDBAdapter.KEY_PLAYBACK_SPEED + " DECIMAL(3,2) DEFAULT NULL");
+        }
     }
 
 }

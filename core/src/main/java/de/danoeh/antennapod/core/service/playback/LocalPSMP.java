@@ -209,13 +209,7 @@ public class LocalPSMP extends PlaybackServiceMediaPlayer {
                 Log.d(TAG, "Audiofocus successfully requested");
                 Log.d(TAG, "Resuming/Starting playback");
                 acquireWifiLockIfNecessary();
-                float speed = 1.0f;
-                try {
-                    speed = Float.parseFloat(UserPreferences.getPlaybackSpeed());
-                } catch(NumberFormatException e) {
-                    Log.e(TAG, Log.getStackTraceString(e));
-                    UserPreferences.setPlaybackSpeed(String.valueOf(speed));
-                }
+                final float speed = PlaybackSpeed.getPlaybackSpeed(media).getSpeed();
                 setSpeed(speed);
                 setVolume(UserPreferences.getLeftVolume(), UserPreferences.getRightVolume());
 

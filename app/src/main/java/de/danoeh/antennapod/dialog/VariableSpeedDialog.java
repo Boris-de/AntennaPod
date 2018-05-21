@@ -15,7 +15,9 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import java.util.Arrays;
 import java.util.List;
 
+import com.afollestad.materialdialogs.StackingBehavior;
 import de.danoeh.antennapod.R;
+import de.danoeh.antennapod.activity.FeedSettingsActivity;
 import de.danoeh.antennapod.core.preferences.UserPreferences;
 import de.danoeh.antennapod.core.util.IntentUtils;
 
@@ -119,4 +121,18 @@ public class VariableSpeedDialog {
         builder.create().show();
     }
 
+    public static void showSpeedConfiguredInFeedPluginDialog(final Context context, final long feedId) {
+        new MaterialDialog.Builder(context)
+                .title(R.string.playback_speed_configured_for_feed_title)
+                .content(R.string.playback_speed_configured_for_feed_msg)
+                .neutralText(R.string.close_label)
+                .negativeText(R.string.feed_settings_label)
+                .onNegative((dialog, which) -> {
+                    Intent startIntent = new Intent(context, FeedSettingsActivity.class);
+                    startIntent.putExtra(FeedSettingsActivity.EXTRA_FEED_ID, feedId);
+                    context.startActivity(startIntent);
+                })
+                .stackingBehavior(StackingBehavior.ALWAYS)
+                .show();
+    }
 }

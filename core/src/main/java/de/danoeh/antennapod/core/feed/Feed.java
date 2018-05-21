@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.List;
 
 import de.danoeh.antennapod.core.asynctask.ImageResource;
+import de.danoeh.antennapod.core.service.playback.PlaybackSpeed;
 import de.danoeh.antennapod.core.storage.DBWriter;
 import de.danoeh.antennapod.core.storage.PodDBAdapter;
 import de.danoeh.antennapod.core.util.flattr.FlattrStatus;
@@ -168,7 +169,7 @@ public class Feed extends FeedFile implements FlattrThing, ImageResource {
      */
     public Feed(String url, String lastUpdate, String title, String username, String password) {
         this(url, lastUpdate, title);
-        preferences = new FeedPreferences(0, true, FeedPreferences.AutoDeleteAction.GLOBAL, username, password);
+        preferences = new FeedPreferences(0, true, FeedPreferences.AutoDeleteAction.GLOBAL, username, password, PlaybackSpeed.DEFAULT);
     }
 
     public static Feed fromCursor(Cursor cursor) {

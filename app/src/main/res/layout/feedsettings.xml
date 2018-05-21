@@ -208,6 +208,44 @@
                 android:focusableInTouchMode="true"
                 android:cursorVisible="true"/>
 
+            <TextView
+                    android:id="@+id/txtvPlaybackSpeed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/playback_speed"
+                    app:layout_row="0"
+                    app:layout_column="0"
+                    app:layout_gravity="center_vertical"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:textSize="@dimen/text_size_medium"
+                    android:textColor="?android:attr/textColorPrimary" />
+
+            <CheckBox
+                    android:id="@+id/cbxOverridePlaybackSpeed"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/playback_speed_override"
+                    android:enabled="true"
+                    android:textColor="?android:attr/textColorPrimary"
+                    tools:background="@android:color/holo_red_light"
+                    android:checked="true" />
+
+            <EditText
+                android:id="@+id/etxtPlaybackSpeedText"
+                android:layout_width="140sp"
+                android:layout_height="wrap_content"
+                app:layout_row="1"
+                app:layout_column="1"
+                android:hint="@string/playback_speed"
+                android:inputType="numberDecimal"
+                android:focusable="true"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:focusableInTouchMode="true"
+                android:cursorVisible="true"/>
+
         </LinearLayout>
 
     </ScrollView>

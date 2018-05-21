@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
 import android.test.InstrumentationTestCase;
 
+import de.danoeh.antennapod.core.service.playback.PlaybackSpeed;
 import junit.framework.AssertionFailedError;
 
 import org.apache.commons.io.IOUtils;
@@ -122,7 +123,7 @@ public class PlaybackServiceMediaPlayerTest extends InstrumentationTestCase {
     private Playable writeTestPlayable(String downloadUrl, String fileUrl) {
         final Context c = getInstrumentation().getTargetContext();
         Feed f = new Feed(0, null, "f", "l", "d", null, null, null, null, "i", null, null, "l", false);
-        FeedPreferences prefs = new FeedPreferences(f.getId(), false, FeedPreferences.AutoDeleteAction.NO, null, null);
+        FeedPreferences prefs = new FeedPreferences(f.getId(), false, FeedPreferences.AutoDeleteAction.NO, null, null, PlaybackSpeed.DEFAULT);
         f.setPreferences(prefs);
         f.setItems(new ArrayList<>());
         FeedItem i = new FeedItem(0, "t", "i", "l", new Date(), FeedItem.UNPLAYED, f);
