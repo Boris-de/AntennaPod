@@ -94,7 +94,7 @@ public class AudioplayerActivity extends MediaplayerInfoActivity {
             butPlaybackSpeed.setVisibility(View.GONE);
             return;
         }
-        PlaybackSpeed speed = PlaybackSpeed.DEFAULT;
+        PlaybackSpeed speed = PlaybackSpeed.USER_PREFERENCES;
         if(controller.canSetPlaybackSpeed()) {
             speed = getPlaybackSpeed();
         }

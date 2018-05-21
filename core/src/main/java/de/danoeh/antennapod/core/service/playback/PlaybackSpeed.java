@@ -41,7 +41,7 @@ public class PlaybackSpeed {
     }
 
     public int getSeekBarProgress() {
-        return (int) (SEEK_BAR_CONVERSION * speed) - SEEK_BAR_MIN_VALUE_OFFSET;
+        return (int) (SEEK_BAR_CONVERSION * getSpeed()) - SEEK_BAR_MIN_VALUE_OFFSET;
     }
 
     /** Get the speed factor to store in the preferences. This is {@code null} if the feed did not override the speed */
@@ -90,8 +90,8 @@ public class PlaybackSpeed {
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
-                .append("speed", speed)
-                .append("source", source)
+                .append("speed", getSpeed())
+                .append("source", getSource())
                 .toString();
     }
 

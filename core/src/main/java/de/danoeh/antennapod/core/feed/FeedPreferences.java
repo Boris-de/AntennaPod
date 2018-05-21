@@ -69,7 +69,7 @@ public class FeedPreferences {
 
         PlaybackSpeed playbackSpeed;
         if (cursor.isNull(indexPlaybackSpeed)) {
-            playbackSpeed = PlaybackSpeed.DEFAULT;
+            playbackSpeed = PlaybackSpeed.USER_PREFERENCES;
         } else {
             final float speed = cursor.getFloat(indexPlaybackSpeed);
             playbackSpeed = new PlaybackSpeed(speed, PlaybackSpeed.PlaybackSpeedSource.FEED);
