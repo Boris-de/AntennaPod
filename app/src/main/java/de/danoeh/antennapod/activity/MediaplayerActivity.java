@@ -474,9 +474,6 @@ public abstract class MediaplayerActivity extends CastEnabledActivity implements
                         });
 
                         final TextView txtvPlaybackSpeed = (TextView) dialog.findViewById(R.id.txtvPlaybackSpeed);
-                        final PlaybackSpeed currentSpeed = PlaybackSpeed.getPlaybackSpeed(media);
-
-                        txtvPlaybackSpeed.setText(currentSpeed.formatWithMultiplicator());
                         barPlaybackSpeed.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
                             @Override
                             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -502,7 +499,18 @@ public abstract class MediaplayerActivity extends CastEnabledActivity implements
                             public void onStopTrackingTouch(SeekBar seekBar) {
                             }
                         });
-                        barPlaybackSpeed.setProgress(currentSpeed.getSeekBarProgress());
+
+                        final PlaybackSpeed currentSpeed = PlaybackSpeed.getPlaybackSpeed(media);
+                        if (currentSpeed.isConfiguredInFeedSettings()) {
+                            barPlaybackSpeed.setVisibility(View.GONE);
+                            butDecSpeed.setVisibility(View.GONE);
+                            butIncSpeed.setVisibility(View.GONE);
+                            txtvPlaybackSpeed.setText(R.string.playback_speed_overridden_in_feed);
+                            txtvPlaybackSpeed.setOnClickListener(v -> showSpeedConfiguredInFeedPluginDialog());
+                        } else {
+                            txtvPlaybackSpeed.setText(currentSpeed.formatWithMultiplicator());
+                            barPlaybackSpeed.setProgress(currentSpeed.getSeekBarProgress());
+                        }
 
                         final SeekBar barLeftVolume = (SeekBar) dialog.findViewById(R.id.volume_left);
                         barLeftVolume.setProgress(UserPreferences.getLeftVolumePercentage());
@@ -926,23 +934,40 @@ public abstract class MediaplayerActivity extends CastEnabledActivity implements
     }
 
     private void checkFavorite() {
-        Playable playable = controller.getMedia();
-        if (playable != null && playable instanceof FeedMedia) {
-            FeedItem feedItem = ((FeedMedia) playable).getItem();
-            if (feedItem != null) {
-                Observable.fromCallable(() -> DBReader.getFeedItem(feedItem.getId()))
-                    .subscribeOn(Schedulers.newThread())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(
-                        item -> {
-                            boolean isFav = item.isTagged(FeedItem.TAG_FAVORITE);
-                            if (isFavorite != isFav) {
-                                isFavorite = isFav;
-                                invalidateOptionsMenu();
-                            }
-                        }, error -> Log.e(TAG, Log.getStackTraceString(error)));
-            }
+        final Long feedId = getFeedId();
+        if (feedId != null) {
+            Observable.fromCallable(() -> DBReader.getFeedItem(feedId))
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    item -> {
+                        boolean isFav = item.isTagged(FeedItem.TAG_FAVORITE);
+                        if (isFavorite != isFav) {
+                            isFavorite = isFav;
+                            invalidateOptionsMenu();
+                        }
+                    }, error -> Log.e(TAG, Log.getStackTraceString(error)));
         }
     }
 
+
+    void showSpeedConfiguredInFeedPluginDialog() {
+        final Long feedId = getFeedId();
+        if (feedId != null) {
+            VariableSpeedDialog.showSpeedConfiguredInFeedPluginDialog(this, feedId);
+        } else {
+            Log.w(TAG, "Could not get id of current feed");
+        }
+    }
+
+    private Long getFeedId() {
+        Playable media = controller.getMedia();
+        if (media instanceof FeedMedia) {
+            final FeedItem item = ((FeedMedia) media).getItem();
+            if (item != null) {
+                return item.getFeed().getId();
+            }
+        }
+        return null;
+    }
 }

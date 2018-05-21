@@ -288,7 +288,7 @@ public class FeedSettingsActivity extends AppCompatActivity {
 
                     final PlaybackSpeed playbackSpeed = prefs.getPlaybackSpeed();
                     barPlaybackSpeed.setProgress(playbackSpeed.getSeekBarProgress());
-                    cbxOverridePlaybackSpeed.setChecked(playbackSpeed.getSource() == PlaybackSpeed.PlaybackSpeedSource.FEED);
+                    cbxOverridePlaybackSpeed.setChecked(playbackSpeed.isConfiguredInFeedSettings());
                     updatePlaybackSpeed(false);
                     cbxOverridePlaybackSpeed.setOnCheckedChangeListener((compoundButton, checked) -> {
                         updatePlaybackSpeed(true);

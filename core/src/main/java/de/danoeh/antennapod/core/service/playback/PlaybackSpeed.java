@@ -95,6 +95,10 @@ public class PlaybackSpeed {
                 .toString();
     }
 
+    public boolean isConfiguredInFeedSettings() {
+        return source == PlaybackSpeedSource.FEED;
+    }
+
     public enum PlaybackSpeedSource {
         DEFAULT, PREFERENCES, FEED
     }

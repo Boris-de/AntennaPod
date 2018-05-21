@@ -8,8 +8,6 @@ import android.view.View;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import de.danoeh.antennapod.core.feed.FeedItem;
-import de.danoeh.antennapod.core.feed.FeedMedia;
 import de.danoeh.antennapod.core.feed.MediaType;
 import de.danoeh.antennapod.core.preferences.UserPreferences;
 import de.danoeh.antennapod.core.service.playback.PlaybackService;
@@ -79,8 +77,7 @@ public class AudioplayerActivity extends MediaplayerInfoActivity {
             return;
         }
         updatePlaybackSpeedButtonText();
-        PlaybackSpeed.PlaybackSpeedSource playbackSpeedSource = getPlaybackSpeed().getSource();
-        boolean canChangeSpeed = controller.canSetPlaybackSpeed() && playbackSpeedSource != PlaybackSpeed.PlaybackSpeedSource.FEED;
+        boolean canChangeSpeed = controller.canSetPlaybackSpeed() && !getPlaybackSpeed().isConfiguredInFeedSettings();
         ViewCompat.setAlpha(butPlaybackSpeed, canChangeSpeed ? 1.0f : 0.5f);
         butPlaybackSpeed.setVisibility(View.VISIBLE);
     }
@@ -116,13 +113,8 @@ public class AudioplayerActivity extends MediaplayerInfoActivity {
                     return;
                 }
                 final PlaybackSpeed playbackSpeed = getPlaybackSpeed();
-                if (playbackSpeed.getSource() == PlaybackSpeed.PlaybackSpeedSource.FEED) {
-                    final Long feedId = getFeedId();
-                    if (feedId != null) {
-                        VariableSpeedDialog.showSpeedConfiguredInFeedPluginDialog(this, feedId);
-                    } else {
-                        Log.w(TAG, "Could not get id of current feed");
-                    }
+                if (playbackSpeed.isConfiguredInFeedSettings()) {
+                    showSpeedConfiguredInFeedPluginDialog();
                 } else if (controller.canSetPlaybackSpeed()) {
                     String[] availableSpeeds = UserPreferences.getPlaybackSpeedArray();
                     String currentSpeed = playbackSpeed.formatForPreferences();
@@ -159,17 +151,6 @@ public class AudioplayerActivity extends MediaplayerInfoActivity {
             });
             butPlaybackSpeed.setVisibility(View.VISIBLE);
         }
-    }
-
-    private Long getFeedId() {
-        Playable media = controller.getMedia();
-        if (media instanceof FeedMedia) {
-            final FeedItem item = ((FeedMedia) media).getItem();
-            if (item != null) {
-                return item.getFeed().getId();
-            }
-        }
-        return null;
     }
 
     private PlaybackSpeed getPlaybackSpeed() {

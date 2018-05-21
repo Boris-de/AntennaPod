@@ -669,6 +669,7 @@
     <!-- Audio controls -->
     <string name="audio_controls">Audio controls</string>
     <string name="playback_speed_override">Override Global Playback Speed</string>
+    <string name="playback_speed_overridden_in_feed">overridden in Feed</string>
     <string name="playback_speed">Playback Speed</string>
     <string name="volume">Volume</string>
     <string name="left_short">L</string>
