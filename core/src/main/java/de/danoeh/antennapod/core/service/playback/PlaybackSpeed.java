@@ -15,6 +15,10 @@ import java.util.Locale;
 public class PlaybackSpeed {
     private static final String TAG = "PlaybackSpeed";
 
+    public static final int SEEK_BAR_STEP = 2;
+    private static final float SEEK_BAR_CONVERSION = 20.0f;
+    private static final int SEEK_BAR_MIN_VALUE_OFFSET = 10;
+
     /** The default settings (speed factor 1.0) */
     public static final PlaybackSpeed DEFAULT = new PlaybackSpeed(1.0f, PlaybackSpeedSource.DEFAULT);
     /** This instance fetches the current speed factor from the {@link UserPreferences} */
@@ -28,8 +32,16 @@ public class PlaybackSpeed {
         this.source = source;
     }
 
+    public static PlaybackSpeed fromSeekBarProgress(int progress, @Nullable PlaybackSpeedSource source) {
+        return new PlaybackSpeed((progress + SEEK_BAR_MIN_VALUE_OFFSET) / SEEK_BAR_CONVERSION, source);
+    }
+
     public float getSpeed() {
         return speed;
+    }
+
+    public int getSeekBarProgress() {
+        return (int) (SEEK_BAR_CONVERSION * speed) - SEEK_BAR_MIN_VALUE_OFFSET;
     }
 
     /** Get the speed factor to store in the preferences. This is {@code null} if the feed did not override the speed */

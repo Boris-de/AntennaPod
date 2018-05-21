@@ -18,11 +18,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.Spinner;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.bumptech.glide.Glide;
@@ -61,13 +63,16 @@ public class FeedSettingsActivity extends AppCompatActivity {
     private EditText etxtUsername;
     private EditText etxtPassword;
     private EditText etxtFilterText;
-    private EditText etxtPlaybackSpeed;
     private RadioButton rdoFilterInclude;
     private RadioButton rdoFilterExclude;
     private CheckBox cbxAutoDownload;
     private CheckBox cbxKeepUpdated;
     private CheckBox cbxOverridePlaybackSpeed;
     private Spinner spnAutoDelete;
+    private Button butDecSpeed;
+    private Button butIncSpeed;
+    private SeekBar barPlaybackSpeed;
+    private TextView txtvPlaybackSpeedSetting;
     private boolean filterInclude = true;
 
     private Subscription subscription;
@@ -122,6 +127,23 @@ public class FeedSettingsActivity extends AppCompatActivity {
         }
     };
 
+    private final SeekBar.OnSeekBarChangeListener speedSeekBarChangeListener = new SeekBar.OnSeekBarChangeListener() {
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            if (fromUser) {
+                updatePlaybackSpeed(true);
+            }
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+        }
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
+        }
+    };
+
     private boolean playbackSpeedChanged = false;
 
     @Override
@@ -148,7 +170,6 @@ public class FeedSettingsActivity extends AppCompatActivity {
         etxtUsername = (EditText) findViewById(R.id.etxtUsername);
         etxtPassword = (EditText) findViewById(R.id.etxtPassword);
         etxtFilterText = (EditText) findViewById(R.id.etxtEpisodeFilterText);
-        etxtPlaybackSpeed = (EditText) findViewById(R.id.etxtPlaybackSpeedText);
         rdoFilterInclude = (RadioButton) findViewById(R.id.radio_filter_include);
         rdoFilterInclude.setOnClickListener(v -> {
             filterInclude = true;
@@ -159,6 +180,10 @@ public class FeedSettingsActivity extends AppCompatActivity {
             filterInclude = false;
             filterTextChanged = true;
         });
+        butDecSpeed = (Button) findViewById(R.id.feedSettingsButDecSpeed);
+        butIncSpeed = (Button) findViewById(R.id.feedSettingsButIncSpeed);
+        barPlaybackSpeed = (SeekBar) findViewById(R.id.barPlaybackSpeed);
+        txtvPlaybackSpeedSetting = (TextView) findViewById(R.id.txtvPlaybackSpeedSetting);
 
         subscription = Observable.fromCallable(()-> DBReader.getFeed(feedId))
                 .subscribeOn(Schedulers.newThread())
@@ -261,13 +286,16 @@ public class FeedSettingsActivity extends AppCompatActivity {
                     }
                     etxtFilterText.addTextChangedListener(filterTextWatcher);
 
-                    cbxOverridePlaybackSpeed.setChecked(prefs.getPlaybackSpeed().getSource() == PlaybackSpeed.PlaybackSpeedSource.FEED);
-                    updatePlaybackSpeed();
+                    final PlaybackSpeed playbackSpeed = prefs.getPlaybackSpeed();
+                    barPlaybackSpeed.setProgress(playbackSpeed.getSeekBarProgress());
+                    cbxOverridePlaybackSpeed.setChecked(playbackSpeed.getSource() == PlaybackSpeed.PlaybackSpeedSource.FEED);
+                    updatePlaybackSpeed(false);
                     cbxOverridePlaybackSpeed.setOnCheckedChangeListener((compoundButton, checked) -> {
-                        playbackSpeedChanged = true;
-                        updatePlaybackSpeed();
+                        updatePlaybackSpeed(true);
                     });
-
+                    barPlaybackSpeed.setOnSeekBarChangeListener(speedSeekBarChangeListener);
+                    butDecSpeed.setOnClickListener(v -> updateBarPlaybackSpeed(-PlaybackSpeed.SEEK_BAR_STEP));
+                    butIncSpeed.setOnClickListener(v -> updateBarPlaybackSpeed(PlaybackSpeed.SEEK_BAR_STEP));
                     supportInvalidateOptionsMenu();
                     updateAutoDownloadSettings();
                 }, error -> {
@@ -365,27 +393,36 @@ public class FeedSettingsActivity extends AppCompatActivity {
         }
     }
 
-    private void updatePlaybackSpeed() {
-        final PlaybackSpeed playbackSpeed = feed.getPreferences().getPlaybackSpeed();
-        etxtPlaybackSpeed.setEnabled(cbxOverridePlaybackSpeed.isChecked());
-        etxtPlaybackSpeed.setText(playbackSpeed.formatForPreferences());
+    private void updatePlaybackSpeed(boolean isSpeedChange) {
+        playbackSpeedChanged = isSpeedChange;
+        final boolean enablePlaybackSpeedWidgets = cbxOverridePlaybackSpeed.isChecked();
+        updateSpeedIncDecButton(butDecSpeed, enablePlaybackSpeedWidgets);
+        updateSpeedIncDecButton(butIncSpeed, enablePlaybackSpeedWidgets);
+        barPlaybackSpeed.setEnabled(enablePlaybackSpeedWidgets);
+
+        final PlaybackSpeed playbackSpeed = getPlaybackSpeed();
+        barPlaybackSpeed.setProgress(playbackSpeed.getSeekBarProgress());
+        txtvPlaybackSpeedSetting.setText(playbackSpeed.formatWithMultiplicator());
+    }
+
+    private void updateSpeedIncDecButton(Button butIncSpeed, boolean enabled) {
+        final int butSpeedColor = enabled ? R.color.status_progress : R.color.disabled_text_light;
+        butIncSpeed.setEnabled(enabled);
+        butIncSpeed.setTextColor(getResources().getColor(butSpeedColor));
+    }
+
+    private void updateBarPlaybackSpeed(int amount) {
+        barPlaybackSpeed.setProgress(barPlaybackSpeed.getProgress() + amount);
+        updatePlaybackSpeed(true);
     }
 
     private PlaybackSpeed getPlaybackSpeed() {
         PlaybackSpeed playbackSpeed = null;
         if (cbxOverridePlaybackSpeed.isChecked()) {
-            playbackSpeed = parsePlaybackSpeed();
+            final int progress = barPlaybackSpeed.getProgress();
+            playbackSpeed = PlaybackSpeed.fromSeekBarProgress(progress, PlaybackSpeed.PlaybackSpeedSource.FEED);
         }
         return playbackSpeed != null ? playbackSpeed : PlaybackSpeed.USER_PREFERENCES;
-    }
-
-    private PlaybackSpeed parsePlaybackSpeed() {
-        try {
-            final String strSpeed = etxtPlaybackSpeed.getText().toString();
-            return new PlaybackSpeed(Float.parseFloat(strSpeed), PlaybackSpeed.PlaybackSpeedSource.FEED);
-        } catch (NumberFormatException e) {
-            return null;
-        }
     }
 
     private static class ApplyToEpisodesDialog extends ConfirmationDialog {

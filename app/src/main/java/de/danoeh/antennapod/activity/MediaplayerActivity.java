@@ -459,7 +459,7 @@ public abstract class MediaplayerActivity extends CastEnabledActivity implements
                         final Button butDecSpeed = (Button) dialog.findViewById(R.id.butDecSpeed);
                         butDecSpeed.setOnClickListener(v -> {
                             if(controller != null && controller.canSetPlaybackSpeed()) {
-                                barPlaybackSpeed.setProgress(barPlaybackSpeed.getProgress() - 2);
+                                barPlaybackSpeed.setProgress(barPlaybackSpeed.getProgress() - PlaybackSpeed.SEEK_BAR_STEP);
                             } else {
                                 VariableSpeedDialog.showGetPluginDialog(this);
                             }
@@ -467,7 +467,7 @@ public abstract class MediaplayerActivity extends CastEnabledActivity implements
                         final Button butIncSpeed = (Button) dialog.findViewById(R.id.butIncSpeed);
                         butIncSpeed.setOnClickListener(v -> {
                             if(controller != null && controller.canSetPlaybackSpeed()) {
-                                barPlaybackSpeed.setProgress(barPlaybackSpeed.getProgress() + 2);
+                                barPlaybackSpeed.setProgress(barPlaybackSpeed.getProgress() + PlaybackSpeed.SEEK_BAR_STEP);
                             } else {
                                 VariableSpeedDialog.showGetPluginDialog(this);
                             }
@@ -481,13 +481,13 @@ public abstract class MediaplayerActivity extends CastEnabledActivity implements
                             @Override
                             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                                 if(controller != null && controller.canSetPlaybackSpeed()) {
-                                    PlaybackSpeed playbackSpeed = new PlaybackSpeed((progress + 10) / 20.0f, null);
+                                    PlaybackSpeed playbackSpeed = PlaybackSpeed.fromSeekBarProgress(progress, null);
                                     controller.setPlaybackSpeed(playbackSpeed.getSpeed());
                                     UserPreferences.setPlaybackSpeed(playbackSpeed.formatForPreferences());
                                     txtvPlaybackSpeed.setText(playbackSpeed.formatWithMultiplicator());
                                 } else if(fromUser) {
-                                    float speed = PlaybackSpeed.USER_PREFERENCES.getSpeed();
-                                    barPlaybackSpeed.post(() -> barPlaybackSpeed.setProgress((int) (20 * speed) - 10));
+                                    PlaybackSpeed speed = PlaybackSpeed.USER_PREFERENCES;
+                                    barPlaybackSpeed.post(() -> barPlaybackSpeed.setProgress(speed.getSeekBarProgress()));
                                 }
                             }
 
@@ -502,7 +502,7 @@ public abstract class MediaplayerActivity extends CastEnabledActivity implements
                             public void onStopTrackingTouch(SeekBar seekBar) {
                             }
                         });
-                        barPlaybackSpeed.setProgress((int) (20 * currentSpeed.getSpeed()) - 10);
+                        barPlaybackSpeed.setProgress(currentSpeed.getSeekBarProgress());
 
                         final SeekBar barLeftVolume = (SeekBar) dialog.findViewById(R.id.volume_left);
                         barLeftVolume.setProgress(UserPreferences.getLeftVolumePercentage());

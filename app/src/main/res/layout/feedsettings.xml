@@ -209,7 +209,7 @@
                 android:cursorVisible="true"/>
 
             <TextView
-                    android:id="@+id/txtvPlaybackSpeed"
+                    android:id="@+id/txtvFeedSettingsPlaybackSpeed"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/playback_speed"
@@ -232,19 +232,57 @@
                     tools:background="@android:color/holo_red_light"
                     android:checked="true" />
 
-            <EditText
-                android:id="@+id/etxtPlaybackSpeedText"
-                android:layout_width="140sp"
-                android:layout_height="wrap_content"
-                app:layout_row="1"
-                app:layout_column="1"
-                android:hint="@string/playback_speed"
-                android:inputType="numberDecimal"
-                android:focusable="true"
-                android:layout_gravity="center"
-                android:gravity="center"
-                android:focusableInTouchMode="true"
-                android:cursorVisible="true"/>
+            <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                <Button
+                        android:id="@+id/feedSettingsButDecSpeed"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_alignParentLeft="true"
+                        android:gravity="center"
+                        android:text="-"
+                        android:textStyle="bold"
+                        android:textColor="@color/status_progress"
+                        android:textSize="24sp"
+                        android:background="@drawable/borderless_button_dark"/>
+
+                <Button
+                        android:id="@+id/feedSettingsButIncSpeed"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:minWidth="0dp"
+                        android:layout_alignParentRight="true"
+                        android:gravity="center"
+                        android:text="+"
+                        android:textStyle="bold"
+                        android:textColor="@color/status_progress"
+                        android:textSize="24sp"
+                        android:background="@drawable/borderless_button_dark"/>
+
+                <SeekBar
+                        android:id="@+id/barPlaybackSpeed"
+                        android:layout_width="match_parent"
+                        android:layout_height="32dp"
+                        android:layout_toRightOf="@id/butDecSpeed"
+                        android:layout_toLeftOf="@id/butIncSpeed"
+                        android:layout_marginRight="16dp"
+                        android:layout_marginLeft="16dp"
+                        android:layout_centerVertical="true"
+                        android:max="40"/>
+
+            </RelativeLayout>
+
+            <TextView
+                    android:id="@+id/txtvPlaybackSpeedSetting"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    app:layout_row="0"
+                    app:layout_column="0"
+                    app:layout_gravity="center_vertical"
+                    android:text="1.00x"/>
 
         </LinearLayout>
 
